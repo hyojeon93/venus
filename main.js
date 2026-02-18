@@ -10,6 +10,7 @@ const celebName = document.getElementById('celeb-name');
 const celebScore = document.getElementById('celeb-score');
 const celebVibe = document.getElementById('celeb-vibe');
 const themeToggle = document.getElementById('theme-toggle');
+const uploadInput = document.getElementById('upload');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
@@ -87,6 +88,17 @@ function scoreFromDescriptor(descriptor) {
     return 72 + Math.floor((variance * 1000) % 23);
 }
 
+function applyResult(descriptor) {
+    const index = descriptorToIndex(Array.from(descriptor));
+    const celeb = celebrities[index];
+    const score = scoreFromDescriptor(Array.from(descriptor));
+
+    celebImage.src = celeb.img;
+    celebName.textContent = celeb.name;
+    celebScore.textContent = `Similarity ${score}%`;
+    celebVibe.textContent = celeb.vibe;
+}
+
 async function analyzeFrame() {
     analyzeBtn.disabled = true;
     setStatus('얼굴을 분석 중…');
@@ -111,16 +123,37 @@ async function analyzeFrame() {
 
     drawOverlay(detection, displaySize);
 
-    const index = descriptorToIndex(Array.from(detection.descriptor));
-    const celeb = celebrities[index];
-    const score = scoreFromDescriptor(Array.from(detection.descriptor));
-
-    celebImage.src = celeb.img;
-    celebName.textContent = celeb.name;
-    celebScore.textContent = `Similarity ${score}%`;
-    celebVibe.textContent = celeb.vibe;
+    applyResult(detection.descriptor);
 
     setStatus('완료! 다른 각도로 다시 시도해 보세요.');
+    analyzeBtn.disabled = false;
+}
+
+async function analyzeImageFile(file) {
+    if (!file) return;
+    analyzeBtn.disabled = true;
+    setStatus('업로드 이미지를 분석 중…');
+
+    const image = await faceapi.bufferToImage(file);
+    capture.width = image.width;
+    capture.height = image.height;
+    captureCtx.drawImage(image, 0, 0, capture.width, capture.height);
+
+    const detection = await faceapi
+        .detectSingleFace(image, detectorOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+    if (!detection) {
+        setStatus('얼굴을 찾지 못했어요. 다른 사진으로 다시 시도해 주세요.', true);
+        analyzeBtn.disabled = false;
+        return;
+    }
+
+    applyResult(detection.descriptor);
+    setStatus('완료! 다른 사진으로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
 }
 
@@ -158,6 +191,10 @@ async function init() {
         });
 
         analyzeBtn.addEventListener('click', analyzeFrame);
+        uploadInput.addEventListener('change', (event) => {
+            const file = event.target.files && event.target.files[0];
+            analyzeImageFile(file);
+        });
     } catch (err) {
         console.error(err);
         setStatus('카메라 또는 모델 로딩에 실패했어요. 브라우저 권한을 확인해주세요.', true);
