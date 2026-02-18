@@ -5,47 +5,11 @@ const capture = document.getElementById('capture');
 const captureCtx = capture.getContext('2d');
 const analyzeBtn = document.getElementById('analyze');
 const statusEl = document.getElementById('status');
-const celebImage = document.getElementById('celeb-image');
-const celebName = document.getElementById('celeb-name');
-const celebScore = document.getElementById('celeb-score');
-const celebVibe = document.getElementById('celeb-vibe');
+const metricsEl = document.getElementById('metrics');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
-
-const celebrities = [
-    {
-        name: 'Zendaya',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Zendaya_2019_by_Glenn_Francis.jpg',
-        vibe: '차분하면서도 강렬한 분위기'
-    },
-    {
-        name: 'Park Seo-joon',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Park_Seo-joon_2018.jpg',
-        vibe: '부드러운 인상과 또렷한 이목구비'
-    },
-    {
-        name: 'IU',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Lee_Ji-eun_%28IU%29_2018.jpg',
-        vibe: '맑고 선명한 이미지'
-    },
-    {
-        name: 'Chris Evans',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Chris_Evans_by_Gage_Skidmore_2.jpg',
-        vibe: '선이 또렷한 클래식한 분위기'
-    },
-    {
-        name: 'Kim Go-eun',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/8/8f/Kim_Go-eun_2016.jpg',
-        vibe: '자연스럽고 세련된 인상'
-    },
-    {
-        name: 'Timothée Chalamet',
-        img: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Timoth%C3%A9e_Chalamet_2017_Berlinale.jpg',
-        vibe: '섬세한 분위기와 강한 존재감'
-    }
-];
 
 const detectorOptions = new faceapi.TinyFaceDetectorOptions({
     inputSize: 416,
@@ -60,8 +24,7 @@ function setStatus(message, isError = false) {
 async function loadModels() {
     await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
     ]);
 }
 
@@ -78,25 +41,134 @@ function drawOverlay(detections, displaySize) {
     faceapi.draw.drawFaceLandmarks(overlay, resized);
 }
 
-function descriptorToIndex(descriptor) {
-    const total = descriptor.reduce((sum, value, idx) => sum + Math.abs(value) * (idx + 1), 0);
-    return Math.floor(total * 1000) % celebrities.length;
+function distance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function scoreFromDescriptor(descriptor) {
-    const variance = descriptor.reduce((sum, v) => sum + Math.abs(v), 0);
-    return 72 + Math.floor((variance * 1000) % 23);
+function midpoint(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
 
-function applyResult(descriptor) {
-    const index = descriptorToIndex(Array.from(descriptor));
-    const celeb = celebrities[index];
-    const score = scoreFromDescriptor(Array.from(descriptor));
+function formatRatio(value) {
+    return `${value.toFixed(2)}`;
+}
 
-    celebImage.src = celeb.img;
-    celebName.textContent = celeb.name;
-    celebScore.textContent = `Similarity ${score}%`;
-    celebVibe.textContent = celeb.vibe;
+function renderMetrics(metrics) {
+    metricsEl.innerHTML = '';
+    metrics.forEach((metric) => {
+        const item = document.createElement('div');
+        item.className = 'metric';
+        item.innerHTML = `
+            <div class="label">${metric.label}</div>
+            <div class="value">${metric.value}</div>
+            <div class="range">참고 범위: ${metric.range}</div>
+        `;
+        metricsEl.appendChild(item);
+    });
+}
+
+function computeMetrics(landmarks) {
+    const jaw = landmarks.getJawOutline();
+    const leftJaw = jaw[0];
+    const rightJaw = jaw[16];
+    const faceWidth = distance(leftJaw, rightJaw);
+
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
+    const leftEyeCenter = midpoint(leftEye[0], leftEye[3]);
+    const rightEyeCenter = midpoint(rightEye[0], rightEye[3]);
+    const eyeDistance = distance(leftEyeCenter, rightEyeCenter);
+
+    const nose = landmarks.getNose();
+    const noseWidth = distance(nose[3], nose[5]);
+
+    const mouth = landmarks.getMouth();
+    const mouthWidth = distance(mouth[0], mouth[6]);
+
+    const brow = landmarks.getLeftEyeBrow().concat(landmarks.getRightEyeBrow());
+    const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
+    const chin = jaw[8];
+    const faceHeight = distance(browTop, chin);
+
+    const eyeLine = midpoint(leftEyeCenter, rightEyeCenter);
+    const noseTip = nose[3];
+    const mouthCenter = midpoint(mouth[3], mouth[9]);
+
+    const eyeToNose = Math.abs(eyeLine.y - noseTip.y);
+    const noseToMouth = Math.abs(noseTip.y - mouthCenter.y);
+    const mouthToChin = Math.abs(mouthCenter.y - chin.y);
+
+    const symmetryLeft = distance(leftEyeCenter, { x: (leftJaw.x + rightJaw.x) / 2, y: leftEyeCenter.y });
+    const symmetryRight = distance(rightEyeCenter, { x: (leftJaw.x + rightJaw.x) / 2, y: rightEyeCenter.y });
+    const symmetryRatio = symmetryLeft / symmetryRight;
+
+    return [
+        {
+            label: '눈 사이 거리 / 얼굴 너비',
+            value: formatRatio(eyeDistance / faceWidth),
+            range: '0.36 - 0.48'
+        },
+        {
+            label: '코 너비 / 얼굴 너비',
+            value: formatRatio(noseWidth / faceWidth),
+            range: '0.18 - 0.30'
+        },
+        {
+            label: '입 너비 / 얼굴 너비',
+            value: formatRatio(mouthWidth / faceWidth),
+            range: '0.30 - 0.46'
+        },
+        {
+            label: '눈-코-입 세로 비율',
+            value: `${formatRatio(eyeToNose / noseToMouth)} : 1 : ${formatRatio(mouthToChin / noseToMouth)}`,
+            range: '0.8 - 1.2 : 1 : 0.8 - 1.3'
+        },
+        {
+            label: '좌/우 눈 중심 대칭 비율',
+            value: formatRatio(symmetryRatio),
+            range: '0.92 - 1.08'
+        },
+        {
+            label: '얼굴 높이 / 얼굴 너비',
+            value: formatRatio(faceHeight / faceWidth),
+            range: '1.15 - 1.45'
+        }
+    ];
+}
+
+function drawGuideLines(landmarks, displaySize) {
+    const jaw = landmarks.getJawOutline();
+    const leftJaw = jaw[0];
+    const rightJaw = jaw[16];
+    const midX = (leftJaw.x + rightJaw.x) / 2;
+    const brow = landmarks.getLeftEyeBrow().concat(landmarks.getRightEyeBrow());
+    const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
+    const chin = jaw[8];
+
+    overlayCtx.strokeStyle = 'rgba(255, 179, 71, 0.9)';
+    overlayCtx.lineWidth = 2;
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(midX, browTop.y - 10);
+    overlayCtx.lineTo(midX, chin.y + 10);
+    overlayCtx.stroke();
+
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
+    const eyeLine = midpoint(midpoint(leftEye[0], leftEye[3]), midpoint(rightEye[0], rightEye[3]));
+    const noseTip = landmarks.getNose()[3];
+    const mouthCenter = midpoint(landmarks.getMouth()[3], landmarks.getMouth()[9]);
+
+    [eyeLine.y, noseTip.y, mouthCenter.y].forEach((y) => {
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(leftJaw.x - 10, y);
+        overlayCtx.lineTo(rightJaw.x + 10, y);
+        overlayCtx.stroke();
+    });
+}
+
+function applyResult(landmarks) {
+    const metrics = computeMetrics(landmarks);
+    renderMetrics(metrics);
 }
 
 async function analyzeFrame() {
@@ -108,8 +180,7 @@ async function analyzeFrame() {
 
     const detection = await faceapi
         .detectSingleFace(video, detectorOptions)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+        .withFaceLandmarks();
 
     if (!detection) {
         setStatus('얼굴을 찾지 못했어요. 조명을 밝게 하고 다시 시도해 주세요.', true);
@@ -122,8 +193,8 @@ async function analyzeFrame() {
     captureCtx.drawImage(video, 0, 0, capture.width, capture.height);
 
     drawOverlay(detection, displaySize);
-
-    applyResult(detection.descriptor);
+    drawGuideLines(detection.landmarks, displaySize);
+    applyResult(detection.landmarks);
 
     setStatus('완료! 다른 각도로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
@@ -141,10 +212,7 @@ async function analyzeImageFile(file) {
 
     const detection = await faceapi
         .detectSingleFace(image, detectorOptions)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+        .withFaceLandmarks();
 
     if (!detection) {
         setStatus('얼굴을 찾지 못했어요. 다른 사진으로 다시 시도해 주세요.', true);
@@ -152,7 +220,8 @@ async function analyzeImageFile(file) {
         return;
     }
 
-    applyResult(detection.descriptor);
+    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    applyResult(detection.landmarks);
     setStatus('완료! 다른 사진으로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
 }

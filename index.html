@@ -13,8 +13,8 @@
     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">Light</button>
     <header class="hero">
         <p class="eyebrow">Face Match</p>
-        <h1>비슷한 연예인 찾기</h1>
-        <p class="sub">사진을 찍으면 닮은꼴 연예인을 보여줘요. 모든 분석은 브라우저 안에서만 수행됩니다.</p>
+        <h1>얼굴 대칭·비율 시각화</h1>
+        <p class="sub">얼굴 랜드마크를 기반으로 대칭선과 비율 지표를 시각화합니다. 결과는 참고용 지표이며, 미용·의료적 판단을 대체하지 않습니다.</p>
     </header>
 
     <main class="grid">
@@ -31,9 +31,9 @@
 
         <section class="panel">
             <div class="card">
-                <h2>매칭 시작</h2>
-                <p class="muted">가장 잘 보이는 각도로 화면을 바라본 뒤 버튼을 눌러주세요.</p>
-                <button id="analyze">닮은꼴 찾기</button>
+                <h2>분석 시작</h2>
+                <p class="muted">얼굴 정면이 잘 보이게 맞춘 뒤 버튼을 눌러주세요.</p>
+                <button id="analyze">분석하기</button>
                 <div class="upload">
                     <label class="upload-btn" for="upload">사진 업로드</label>
                     <input id="upload" type="file" accept="image/*" />
@@ -43,14 +43,9 @@
             </div>
 
             <div class="card result">
-                <h2>결과</h2>
-                <div class="result-body">
-                    <img id="celeb-image" alt="Look-alike" />
-                    <div>
-                        <p class="name" id="celeb-name">—</p>
-                        <p class="score" id="celeb-score">—</p>
-                        <p class="muted" id="celeb-vibe">얼굴을 인식하면 매칭 결과가 나타납니다.</p>
-                    </div>
+                <h2>지표 요약</h2>
+                <div class="metrics" id="metrics">
+                    <p class="muted">얼굴을 인식하면 대칭·비율 지표가 나타납니다.</p>
                 </div>
             </div>
 
@@ -61,6 +56,20 @@
             </div>
         </section>
     </main>
+
+    <section class="tips">
+        <div class="card">
+            <h2>촬영 가이드 (5장)</h2>
+            <ul class="tip-list">
+                <li>정면 1장</li>
+                <li>왼쪽 측면 1장</li>
+                <li>오른쪽 측면 1장</li>
+                <li>이마 위에서 촬영해 코가 보이게 1장</li>
+                <li>아래에서 위로 촬영해 턱과 코가 보이게 1장</li>
+            </ul>
+            <p class="muted small">동일한 조명과 배경에서 촬영하면 비교가 더 안정적입니다.</p>
+        </div>
+    </section>
 
     <section class="contact">
         <div class="card form-card">
