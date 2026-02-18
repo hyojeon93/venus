@@ -283,18 +283,43 @@ async function init() {
 
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const data = imageData.data;
-                    const pink = { r: 255, g: 105, b: 180 };
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i];
-                        const g = data[i + 1];
-                        const b = data[i + 2];
-                        const a = data[i + 3];
-                        if (a > 0 && r < 70 && g < 70 && b < 70) {
-                            data[i] = pink.r;
-                            data[i + 1] = pink.g;
-                            data[i + 2] = pink.b;
+                    const pink = { r: 255, g: 47, b: 146 };
+                    const width = canvas.width;
+                    const height = canvas.height;
+                    const radius = 2;
+
+                    const isDark = (idx) => {
+                        const r = data[idx];
+                        const g = data[idx + 1];
+                        const b = data[idx + 2];
+                        const a = data[idx + 3];
+                        return a > 0 && r < 80 && g < 80 && b < 80;
+                    };
+
+                    const setPink = (x, y) => {
+                        if (x < 0 || y < 0 || x >= width || y >= height) return;
+                        const i = (y * width + x) * 4;
+                        data[i] = pink.r;
+                        data[i + 1] = pink.g;
+                        data[i + 2] = pink.b;
+                        data[i + 3] = 255;
+                    };
+
+                    for (let y = 0; y < height; y += 1) {
+                        for (let x = 0; x < width; x += 1) {
+                            const i = (y * width + x) * 4;
+                            if (isDark(i)) {
+                                for (let dy = -radius; dy <= radius; dy += 1) {
+                                    for (let dx = -radius; dx <= radius; dx += 1) {
+                                        if (dx * dx + dy * dy <= radius * radius) {
+                                            setPink(x + dx, y + dy);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
+
                     ctx.putImageData(imageData, 0, 0);
                     ratioImage.src = canvas.toDataURL('image/png');
                 } catch (err) {
