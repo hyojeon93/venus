@@ -12,7 +12,6 @@ const metricsEl = document.getElementById('metrics');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
 const ratioImage = document.getElementById('ratio-image');
-const faviconLink = document.getElementById('favicon');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
@@ -273,36 +272,6 @@ async function analyzeImageFile(file) {
 
 async function init() {
     try {
-        if (faviconLink) {
-            const iconImage = new Image();
-            iconImage.src = faviconLink.getAttribute('href');
-            iconImage.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const size = Math.max(iconImage.naturalWidth, iconImage.naturalHeight);
-                canvas.width = size;
-                canvas.height = size;
-                ctx.drawImage(iconImage, 0, 0, size, size);
-                const imageData = ctx.getImageData(0, 0, size, size);
-                const data = imageData.data;
-                const pink = { r: 255, g: 105, b: 180 };
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const a = data[i + 3];
-                    if (a > 0 && r < 70 && g < 70 && b < 70) {
-                        data[i] = pink.r;
-                        data[i + 1] = pink.g;
-                        data[i + 2] = pink.b;
-                    }
-                }
-                ctx.putImageData(imageData, 0, 0);
-                faviconLink.setAttribute('href', canvas.toDataURL('image/png'));
-                faviconLink.setAttribute('type', 'image/png');
-            };
-        }
-
         if (ratioImage) {
             ratioImage.addEventListener('load', () => {
                 try {
