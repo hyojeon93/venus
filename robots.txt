@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://thevenus.pages.dev/sitemap.xml
+Sitemap: https://thevenus.cc/sitemap.xml
