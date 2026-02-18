@@ -154,6 +154,10 @@ video, #overlay {
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 
+.comments #disqus_thread {
+    margin-top: 12px;
+}
+
 .contact {
     margin-top: 40px;
     max-width: 520px;
