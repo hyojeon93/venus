@@ -1,18 +1,56 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Analysis App</title>
+    <title>Look‑Alike Finder</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prata&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Face Analysis App</h1>
-    <div class="container">
-        <video id="video" width="720" height="560" autoplay muted></video>
-        <canvas id="canvas" width="720" height="560"></canvas>
-    </div>
+    <header class="hero">
+        <p class="eyebrow">Face Match</p>
+        <h1>비슷한 연예인 찾기</h1>
+        <p class="sub">사진을 찍으면 닮은꼴 연예인을 보여줘요. 모든 분석은 브라우저 안에서만 수행됩니다.</p>
+    </header>
+
+    <main class="grid">
+        <section class="stage">
+            <div class="frame">
+                <video id="video" width="720" height="560" autoplay muted playsinline></video>
+                <canvas id="overlay" width="720" height="560"></canvas>
+            </div>
+            <div class="snapshot">
+                <p class="label">Captured</p>
+                <canvas id="capture" width="360" height="280"></canvas>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="card">
+                <h2>매칭 시작</h2>
+                <p class="muted">가장 잘 보이는 각도로 화면을 바라본 뒤 버튼을 눌러주세요.</p>
+                <button id="analyze">닮은꼴 찾기</button>
+                <p id="status" class="status">모델을 불러오는 중…</p>
+            </div>
+
+            <div class="card result">
+                <h2>결과</h2>
+                <div class="result-body">
+                    <img id="celeb-image" alt="Look-alike" />
+                    <div>
+                        <p class="name" id="celeb-name">—</p>
+                        <p class="score" id="celeb-score">—</p>
+                        <p class="muted" id="celeb-vibe">얼굴을 인식하면 매칭 결과가 나타납니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
