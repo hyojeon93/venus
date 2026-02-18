@@ -56,6 +56,28 @@
         </section>
     </main>
 
+    <section class="contact">
+        <div class="card form-card">
+            <h2>제휴 문의</h2>
+            <p class="muted">간단한 정보를 남겨주시면 빠르게 연락드릴게요.</p>
+            <form class="contact-form" action="https://formspree.io/f/xwvnqbak" method="POST">
+                <label class="field">
+                    <span>이름</span>
+                    <input type="text" name="name" required placeholder="이름을 입력하세요" />
+                </label>
+                <label class="field">
+                    <span>이메일</span>
+                    <input type="email" name="email" required placeholder="you@example.com" />
+                </label>
+                <label class="field">
+                    <span>문의 내용</span>
+                    <textarea name="message" rows="4" required placeholder="어떤 제휴를 원하시나요?"></textarea>
+                </label>
+                <button type="submit">문의 보내기</button>
+            </form>
+        </div>
+    </section>
+
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="main.js"></script>
 </body>

@@ -154,6 +154,43 @@ video, #overlay {
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 
+.contact {
+    margin-top: 40px;
+}
+
+.form-card {
+    max-width: 760px;
+}
+
+.contact-form {
+    display: grid;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: var(--bg-soft);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.contact-form textarea {
+    resize: vertical;
+}
+
 .card h2 {
     margin: 0 0 10px;
     font-size: 22px;
