@@ -156,10 +156,8 @@ video, #overlay {
 
 .contact {
     margin-top: 40px;
-}
-
-.form-card {
-    max-width: 760px;
+    max-width: 520px;
+    margin-left: auto;
 }
 
 .contact-form {
@@ -305,5 +303,10 @@ button:hover:not(:disabled) {
 
     #capture {
         max-width: 100%;
+    }
+
+    .contact {
+        max-width: 100%;
+        margin-left: 0;
     }
 }
