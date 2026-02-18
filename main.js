@@ -11,6 +11,7 @@ const guideSeqEl = document.getElementById('guide-seq');
 const metricsEl = document.getElementById('metrics');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
+const ratioImage = document.getElementById('ratio-image');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
@@ -271,6 +272,37 @@ async function analyzeImageFile(file) {
 
 async function init() {
     try {
+        if (ratioImage) {
+            ratioImage.addEventListener('load', () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = ratioImage.naturalWidth;
+                    canvas.height = ratioImage.naturalHeight;
+                    ctx.drawImage(ratioImage, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    const pink = { r: 255, g: 105, b: 180 };
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        const a = data[i + 3];
+                        if (a > 0 && r < 70 && g < 70 && b < 70) {
+                            data[i] = pink.r;
+                            data[i + 1] = pink.g;
+                            data[i + 2] = pink.b;
+                        }
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    ratioImage.src = canvas.toDataURL('image/png');
+                } catch (err) {
+                    console.warn('Failed to tint ratio image', err);
+                }
+            }, { once: true });
+        }
+
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.classList.add('light');
