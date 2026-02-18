@@ -9,6 +9,17 @@
     --stroke: rgba(255, 255, 255, 0.08);
 }
 
+body.light {
+    --bg: #f7f3ee;
+    --bg-soft: #ffffff;
+    --accent: #3a6ff7;
+    --accent-2: #4ee4b4;
+    --text: #1b1b22;
+    --muted: #5c6470;
+    --card: #ffffff;
+    --stroke: rgba(27, 27, 34, 0.12);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -23,6 +34,28 @@ body {
         radial-gradient(900px 500px at 90% 10%, rgba(255, 179, 71, 0.28), transparent 60%),
         var(--bg);
     padding: 48px 6vw 64px;
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--stroke);
+    background: var(--card);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .hero {

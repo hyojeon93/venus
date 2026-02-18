@@ -9,6 +9,7 @@ const celebImage = document.getElementById('celeb-image');
 const celebName = document.getElementById('celeb-name');
 const celebScore = document.getElementById('celeb-score');
 const celebVibe = document.getElementById('celeb-vibe');
+const themeToggle = document.getElementById('theme-toggle');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
@@ -125,6 +126,20 @@ async function analyzeFrame() {
 
 async function init() {
     try {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+            themeToggle.textContent = 'Dark';
+        } else {
+            themeToggle.textContent = 'Light';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeToggle.textContent = isLight ? 'Dark' : 'Light';
+        });
+
         await loadModels();
         await startVideo();
         setStatus('준비 완료. 버튼을 눌러주세요.');
