@@ -62,12 +62,16 @@
             <p class="muted">간단한 정보를 남겨주시면 빠르게 연락드릴게요.</p>
             <form class="contact-form" action="https://formspree.io/f/xwvnqbak" method="POST">
                 <label class="field">
-                    <span>이름</span>
-                    <input type="text" name="name" required placeholder="이름을 입력하세요" />
+                    <span>이름/회사명</span>
+                    <input type="text" name="name" required placeholder="이름 또는 회사명을 입력하세요" />
                 </label>
                 <label class="field">
                     <span>이메일</span>
                     <input type="email" name="email" required placeholder="you@example.com" />
+                </label>
+                <label class="field">
+                    <span>전화번호</span>
+                    <input type="tel" name="phone" required placeholder="010-1234-5678" />
                 </label>
                 <label class="field">
                     <span>문의 내용</span>
