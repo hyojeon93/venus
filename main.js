@@ -5,6 +5,7 @@ const capture = document.getElementById('capture');
 const captureCtx = capture.getContext('2d');
 const analyzeBtn = document.getElementById('analyze');
 const statusEl = document.getElementById('status');
+const guideSeqEl = document.getElementById('guide-seq');
 const metricsEl = document.getElementById('metrics');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
@@ -16,9 +17,39 @@ const detectorOptions = new faceapi.TinyFaceDetectorOptions({
     scoreThreshold: 0.5
 });
 
+const guideSteps = [
+    '정면 1장',
+    '왼쪽 측면 1장',
+    '오른쪽 측면 1장',
+    '이마 위에서 코가 보이게 1장',
+    '아래에서 위로 턱과 코가 보이게 1장'
+];
+
+let guideTimer = null;
+
 function setStatus(message, isError = false) {
     statusEl.textContent = message;
     statusEl.style.color = isError ? '#ff7a7a' : '';
+}
+
+function startGuideSequence() {
+    if (!guideSeqEl) return;
+    if (guideTimer) {
+        clearInterval(guideTimer);
+        guideTimer = null;
+    }
+
+    let index = 0;
+    guideSeqEl.textContent = `촬영 가이드: ${guideSteps[index]}`;
+    guideTimer = setInterval(() => {
+        index += 1;
+        if (index >= guideSteps.length) {
+            clearInterval(guideTimer);
+            guideTimer = null;
+            return;
+        }
+        guideSeqEl.textContent = `촬영 가이드: ${guideSteps[index]}`;
+    }, 1400);
 }
 
 async function loadModels() {
@@ -173,6 +204,7 @@ function applyResult(landmarks) {
 
 async function analyzeFrame() {
     analyzeBtn.disabled = true;
+    startGuideSequence();
     setStatus('얼굴을 분석 중…');
 
     const displaySize = { width: video.videoWidth, height: video.videoHeight };
@@ -203,6 +235,7 @@ async function analyzeFrame() {
 async function analyzeImageFile(file) {
     if (!file) return;
     analyzeBtn.disabled = true;
+    startGuideSequence();
     setStatus('업로드 이미지를 분석 중…');
 
     const image = await faceapi.bufferToImage(file);
