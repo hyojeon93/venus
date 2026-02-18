@@ -3,6 +3,8 @@ const overlay = document.getElementById('overlay');
 const overlayCtx = overlay.getContext('2d');
 const capture = document.getElementById('capture');
 const captureCtx = capture.getContext('2d');
+const previewImage = document.getElementById('photo-preview');
+const frameEl = document.querySelector('.frame');
 const analyzeBtn = document.getElementById('analyze');
 const statusEl = document.getElementById('status');
 const guideSeqEl = document.getElementById('guide-seq');
@@ -167,7 +169,7 @@ function computeMetrics(landmarks) {
     ];
 }
 
-function drawGuideLines(landmarks, displaySize) {
+function drawGuideLines(ctx, landmarks) {
     const jaw = landmarks.getJawOutline();
     const leftJaw = jaw[0];
     const rightJaw = jaw[16];
@@ -176,12 +178,12 @@ function drawGuideLines(landmarks, displaySize) {
     const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
     const chin = jaw[8];
 
-    overlayCtx.strokeStyle = 'rgba(255, 179, 71, 0.9)';
-    overlayCtx.lineWidth = 2;
-    overlayCtx.beginPath();
-    overlayCtx.moveTo(midX, browTop.y - 10);
-    overlayCtx.lineTo(midX, chin.y + 10);
-    overlayCtx.stroke();
+    ctx.strokeStyle = 'rgba(255, 179, 71, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(midX, browTop.y - 10);
+    ctx.lineTo(midX, chin.y + 10);
+    ctx.stroke();
 
     const leftEye = landmarks.getLeftEye();
     const rightEye = landmarks.getRightEye();
@@ -190,10 +192,10 @@ function drawGuideLines(landmarks, displaySize) {
     const mouthCenter = midpoint(landmarks.getMouth()[3], landmarks.getMouth()[9]);
 
     [eyeLine.y, noseTip.y, mouthCenter.y].forEach((y) => {
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(leftJaw.x - 10, y);
-        overlayCtx.lineTo(rightJaw.x + 10, y);
-        overlayCtx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(leftJaw.x - 10, y);
+        ctx.lineTo(rightJaw.x + 10, y);
+        ctx.stroke();
     });
 }
 
@@ -206,6 +208,7 @@ async function analyzeFrame() {
     analyzeBtn.disabled = true;
     startGuideSequence();
     setStatus('얼굴을 분석 중…');
+    frameEl.classList.remove('has-preview');
 
     const displaySize = { width: video.videoWidth, height: video.videoHeight };
     faceapi.matchDimensions(overlay, displaySize);
@@ -225,7 +228,7 @@ async function analyzeFrame() {
     captureCtx.drawImage(video, 0, 0, capture.width, capture.height);
 
     drawOverlay(detection, displaySize);
-    drawGuideLines(detection.landmarks, displaySize);
+    drawGuideLines(overlayCtx, detection.landmarks);
     applyResult(detection.landmarks);
 
     setStatus('완료! 다른 각도로 다시 시도해 보세요.');
@@ -238,9 +241,15 @@ async function analyzeImageFile(file) {
     startGuideSequence();
     setStatus('업로드 이미지를 분석 중…');
 
+    const objectUrl = URL.createObjectURL(file);
+    previewImage.src = objectUrl;
+    previewImage.onload = () => URL.revokeObjectURL(objectUrl);
+    frameEl.classList.add('has-preview');
+
     const image = await faceapi.bufferToImage(file);
     capture.width = image.width;
     capture.height = image.height;
+    captureCtx.clearRect(0, 0, capture.width, capture.height);
     captureCtx.drawImage(image, 0, 0, capture.width, capture.height);
 
     const detection = await faceapi
@@ -254,6 +263,7 @@ async function analyzeImageFile(file) {
     }
 
     overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    drawGuideLines(captureCtx, detection.landmarks);
     applyResult(detection.landmarks);
     setStatus('완료! 다른 사진으로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
