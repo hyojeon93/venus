@@ -8,7 +8,12 @@ const frameEl = document.querySelector('.frame');
 const analyzeBtn = document.getElementById('analyze');
 const statusEl = document.getElementById('status');
 const guideSeqEl = document.getElementById('guide-seq');
-const metricsEl = document.getElementById('metrics');
+const faceShapeEl = document.getElementById('face-shape');
+const confidenceEl = document.getElementById('confidence');
+const confidenceNoteEl = document.getElementById('confidence-note');
+const metricsTableBody = document.querySelector('#metrics-table tbody');
+const downloadCsvBtn = document.getElementById('download-csv');
+const downloadJsonBtn = document.getElementById('download-json');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
 const ratioImage = document.getElementById('ratio-image');
@@ -84,21 +89,72 @@ function midpoint(a, b) {
 }
 
 function formatRatio(value) {
-    return `${value.toFixed(2)}`;
+    return value.toFixed(2);
 }
 
-function renderMetrics(metrics) {
-    metricsEl.innerHTML = '';
+function formatPercent(value) {
+    return `${value.toFixed(1)}%`;
+}
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function computeDeviation(value, range) {
+    if (!range) return null;
+    if (value >= range.min && value <= range.max) return 0;
+    const nearest = value < range.min ? range.min : range.max;
+    return ((value - nearest) / nearest) * 100;
+}
+
+function renderMetricsTable(metrics) {
+    metricsTableBody.innerHTML = '';
     metrics.forEach((metric) => {
-        const item = document.createElement('div');
-        item.className = 'metric';
-        item.innerHTML = `
-            <div class="label">${metric.label}</div>
-            <div class="value">${metric.value}</div>
-            <div class="range">참고 범위: ${metric.range}</div>
+        const deviation = computeDeviation(metric.value, metric.range);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${metric.label}</td>
+            <td>${formatRatio(metric.value)}</td>
+            <td>${metric.range ? `${metric.range.min.toFixed(2)} - ${metric.range.max.toFixed(2)}` : '—'}</td>
+            <td>${deviation === null ? '—' : `${formatPercent(deviation)}${deviation === 0 ? ' (적정)' : ''}`}</td>
         `;
-        metricsEl.appendChild(item);
+        metricsTableBody.appendChild(row);
     });
+}
+
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function wireExports(metrics) {
+    downloadCsvBtn.onclick = () => {
+        const lines = [
+            ['label', 'value', 'range_min', 'range_max', 'deviation_percent'].join(',')
+        ];
+        metrics.forEach((metric) => {
+            const deviation = computeDeviation(metric.value, metric.range);
+            lines.push([
+                `"${metric.label}"`,
+                formatRatio(metric.value),
+                metric.range ? metric.range.min.toFixed(2) : '',
+                metric.range ? metric.range.max.toFixed(2) : '',
+                deviation === null ? '' : deviation.toFixed(1)
+            ].join(','));
+        });
+        downloadFile(lines.join('\n'), 'face-metrics.csv', 'text/csv');
+    };
+
+    downloadJsonBtn.onclick = () => {
+        downloadFile(JSON.stringify(metrics, null, 2), 'face-metrics.json', 'application/json');
+    };
 }
 
 function computeMetrics(landmarks) {
@@ -106,6 +162,7 @@ function computeMetrics(landmarks) {
     const leftJaw = jaw[0];
     const rightJaw = jaw[16];
     const faceWidth = distance(leftJaw, rightJaw);
+    const jawWidth = distance(jaw[4], jaw[12]);
 
     const leftEye = landmarks.getLeftEye();
     const rightEye = landmarks.getRightEye();
@@ -121,6 +178,9 @@ function computeMetrics(landmarks) {
 
     const brow = landmarks.getLeftEyeBrow().concat(landmarks.getRightEyeBrow());
     const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
+    const browLeft = landmarks.getLeftEyeBrow()[0];
+    const browRight = landmarks.getRightEyeBrow()[4];
+    const foreheadWidth = distance(browLeft, browRight);
     const chin = jaw[8];
     const faceHeight = distance(browTop, chin);
 
@@ -131,6 +191,7 @@ function computeMetrics(landmarks) {
     const eyeToNose = Math.abs(eyeLine.y - noseTip.y);
     const noseToMouth = Math.abs(noseTip.y - mouthCenter.y);
     const mouthToChin = Math.abs(mouthCenter.y - chin.y);
+    const totalVertical = eyeToNose + noseToMouth + mouthToChin;
 
     const symmetryLeft = distance(leftEyeCenter, { x: (leftJaw.x + rightJaw.x) / 2, y: leftEyeCenter.y });
     const symmetryRight = distance(rightEyeCenter, { x: (leftJaw.x + rightJaw.x) / 2, y: rightEyeCenter.y });
@@ -139,33 +200,63 @@ function computeMetrics(landmarks) {
     return [
         {
             label: '눈 사이 거리 / 얼굴 너비',
-            value: formatRatio(eyeDistance / faceWidth),
-            range: '0.36 - 0.48'
+            value: eyeDistance / faceWidth,
+            range: { min: 0.36, max: 0.48 }
         },
         {
             label: '코 너비 / 얼굴 너비',
-            value: formatRatio(noseWidth / faceWidth),
-            range: '0.18 - 0.30'
+            value: noseWidth / faceWidth,
+            range: { min: 0.18, max: 0.30 }
         },
         {
             label: '입 너비 / 얼굴 너비',
-            value: formatRatio(mouthWidth / faceWidth),
-            range: '0.30 - 0.46'
+            value: mouthWidth / faceWidth,
+            range: { min: 0.30, max: 0.46 }
         },
         {
-            label: '눈-코-입 세로 비율',
-            value: `${formatRatio(eyeToNose / noseToMouth)} : 1 : ${formatRatio(mouthToChin / noseToMouth)}`,
-            range: '0.8 - 1.2 : 1 : 0.8 - 1.3'
+            label: '눈-코 비율 (세로)',
+            value: eyeToNose / (noseToMouth || 1),
+            range: { min: 0.80, max: 1.20 }
+        },
+        {
+            label: '코-입 비율 (세로)',
+            value: noseToMouth / (mouthToChin || 1),
+            range: { min: 0.80, max: 1.30 }
+        },
+        {
+            label: '상·중·하안면 비율(상)',
+            value: eyeToNose / totalVertical,
+            range: { min: 0.30, max: 0.36 }
+        },
+        {
+            label: '상·중·하안면 비율(중)',
+            value: noseToMouth / totalVertical,
+            range: { min: 0.30, max: 0.36 }
+        },
+        {
+            label: '상·중·하안면 비율(하)',
+            value: mouthToChin / totalVertical,
+            range: { min: 0.30, max: 0.36 }
         },
         {
             label: '좌/우 눈 중심 대칭 비율',
-            value: formatRatio(symmetryRatio),
-            range: '0.92 - 1.08'
+            value: symmetryRatio,
+            range: { min: 0.92, max: 1.08 }
         },
         {
             label: '얼굴 높이 / 얼굴 너비',
-            value: formatRatio(faceHeight / faceWidth),
-            range: '1.15 - 1.45'
+            value: faceHeight / faceWidth,
+            range: { min: 1.15, max: 1.45 }
+        },
+        {
+            label: '턱 너비 / 얼굴 너비',
+            value: jawWidth / faceWidth,
+            range: { min: 0.70, max: 0.90 }
+        },
+        {
+            label: '이마 너비 / 얼굴 너비',
+            value: foreheadWidth / faceWidth,
+            range: { min: 0.70, max: 0.95 }
         }
     ];
 }
@@ -200,9 +291,36 @@ function drawGuideLines(ctx, landmarks) {
     });
 }
 
+function inferFaceShape(landmarks) {
+    const jaw = landmarks.getJawOutline();
+    const leftJaw = jaw[0];
+    const rightJaw = jaw[16];
+    const faceWidth = distance(leftJaw, rightJaw);
+    const jawWidth = distance(jaw[4], jaw[12]);
+    const brow = landmarks.getLeftEyeBrow().concat(landmarks.getRightEyeBrow());
+    const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
+    const chin = jaw[8];
+    const faceHeight = distance(browTop, chin);
+
+    const browLeft = landmarks.getLeftEyeBrow()[0];
+    const browRight = landmarks.getRightEyeBrow()[4];
+    const foreheadWidth = distance(browLeft, browRight);
+
+    const ratio = faceHeight / faceWidth;
+    const jawRatio = jawWidth / faceWidth;
+    const foreheadRatio = foreheadWidth / faceWidth;
+
+    if (ratio > 1.45) return '긴형';
+    if (foreheadRatio > jawRatio + 0.08) return '하트형';
+    if (jawRatio > 0.88) return '각진형';
+    if (ratio < 1.15) return '둥근형';
+    return '타원형';
+}
+
 function applyResult(landmarks) {
     const metrics = computeMetrics(landmarks);
-    renderMetrics(metrics);
+    renderMetricsTable(metrics);
+    wireExports(metrics);
 }
 
 async function analyzeFrame() {
@@ -231,6 +349,18 @@ async function analyzeFrame() {
     drawOverlay(detection, displaySize);
     drawGuideLines(overlayCtx, detection.landmarks);
     applyResult(detection.landmarks);
+
+    const score = detection.detection && typeof detection.detection.score === 'number'
+        ? detection.detection.score
+        : 0.5;
+    const confidence = clamp(score * 100, 0, 100);
+    confidenceEl.textContent = `${confidence.toFixed(0)}%`;
+    confidenceNoteEl.textContent = confidence < 70
+        ? '얼굴 각도/조명 상태에 따라 신뢰도가 낮을 수 있습니다.'
+        : '참고용 지표이며 절대적 기준이 아닙니다.';
+
+    const shape = inferFaceShape(detection.landmarks);
+    faceShapeEl.textContent = shape;
 
     setStatus('완료! 다른 각도로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
@@ -266,6 +396,9 @@ async function analyzeImageFile(file) {
     overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
     drawGuideLines(captureCtx, detection.landmarks);
     applyResult(detection.landmarks);
+    faceShapeEl.textContent = inferFaceShape(detection.landmarks);
+    confidenceEl.textContent = '업로드';
+    confidenceNoteEl.textContent = '업로드 이미지는 해상도/각도에 따라 편차가 있을 수 있습니다.';
     setStatus('완료! 다른 사진으로 다시 시도해 보세요.');
     analyzeBtn.disabled = false;
 }

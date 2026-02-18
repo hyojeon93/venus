@@ -91,10 +91,43 @@
                 <p id="guide-seq" class="status guide"></p>
             </div>
 
-            <div class="card result">
-                <h2>지표 요약</h2>
-                <div class="metrics" id="metrics">
-                    <p class="muted">얼굴을 인식하면 대칭·비율 지표가 나타납니다.</p>
+            <div class="card summary">
+                <h2>요약</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">얼굴형</span>
+                        <span id="face-shape">—</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">신뢰도</span>
+                        <span id="confidence">—</span>
+                    </div>
+                </div>
+                <p class="muted small" id="confidence-note">얼굴을 인식하면 참고용 요약이 표시됩니다.</p>
+            </div>
+
+            <div class="card metrics-table-card">
+                <h2>측정 테이블</h2>
+                <div class="table-wrap">
+                    <table id="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>지표</th>
+                                <th>값</th>
+                                <th>참고 범위</th>
+                                <th>편차</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="muted">얼굴을 인식하면 테이블이 채워집니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="export">
+                    <button id="download-csv">CSV 다운로드</button>
+                    <button id="download-json">JSON 다운로드</button>
                 </div>
             </div>
 
