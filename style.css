@@ -91,6 +91,18 @@ h1 {
     line-height: 1.6;
     opacity: 0.9;
 }
+
+.golden-ratio {
+    margin: 18px 0 8px;
+    max-width: 760px;
+}
+
+.golden-ratio img {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid var(--stroke);
+    background: var(--bg-soft);
+}
 .grid {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
