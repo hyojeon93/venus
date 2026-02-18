@@ -1,8 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <rect x="10" y="10" width="108" height="108" rx="22" stroke="#ff2f92" stroke-width="10"/>
-  <circle cx="44" cy="52" r="7" fill="#ff2f92"/>
-  <circle cx="84" cy="52" r="7" fill="#ff2f92"/>
-  <path d="M64 56v26" stroke="#ff2f92" stroke-width="10" stroke-linecap="round"/>
-  <path d="M46 88c8 8 28 8 36 0" stroke="#ff2f92" stroke-width="10" stroke-linecap="round"/>
-  <path d="M64 16v96" stroke="#ff2f92" stroke-width="4" stroke-dasharray="10 8"/>
+  <defs>
+    <linearGradient id="pinkSky" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff2f92"/>
+      <stop offset="1" stop-color="#60c7ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="108" height="108" rx="22" stroke="url(#pinkSky)" stroke-width="40"/>
+  <circle cx="44" cy="52" r="28" fill="url(#pinkSky)"/>
+  <circle cx="84" cy="52" r="28" fill="url(#pinkSky)"/>
+  <path d="M64 56v26" stroke="url(#pinkSky)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M46 88c8 8 28 8 36 0" stroke="url(#pinkSky)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M64 16v96" stroke="url(#pinkSky)" stroke-width="16" stroke-dasharray="20 16"/>
 </svg>
