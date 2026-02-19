@@ -11,20 +11,31 @@ const summaryEl = document.getElementById('summary');
 const resultsEl = document.getElementById('results');
 const videoEl = document.getElementById('video');
 const previewEl = document.getElementById('preview');
+const yearEls = document.querySelectorAll('#year');
 
 let model = null;
 let stream = null;
 
+function setFooterYear() {
+  const year = new Date().getFullYear();
+  yearEls.forEach((el) => {
+    el.textContent = String(year);
+  });
+}
+
 function setStatus(message, isError = false) {
+  if (!statusEl) return;
   statusEl.textContent = message;
-  statusEl.style.color = isError ? '#ff9d9d' : '';
+  statusEl.style.color = isError ? '#ffb4b4' : '';
 }
 
 function setSummary(text) {
+  if (!summaryEl) return;
   summaryEl.textContent = text;
 }
 
 function renderPredictions(predictions) {
+  if (!resultsEl) return;
   resultsEl.innerHTML = '';
 
   predictions.forEach((item) => {
@@ -81,8 +92,8 @@ async function loadModel() {
   try {
     setStatus('모델 로딩 중...');
     model = await tmImage.load(MODEL_URL, METADATA_URL);
-    startCameraBtn.disabled = false;
-    predictCameraBtn.disabled = false;
+    if (startCameraBtn) startCameraBtn.disabled = false;
+    if (predictCameraBtn) predictCameraBtn.disabled = false;
     setStatus('모델 준비 완료. 카메라 또는 업로드로 분석해보세요.');
   } catch (error) {
     console.error(error);
@@ -92,6 +103,7 @@ async function loadModel() {
 
 async function startCamera() {
   try {
+    if (!videoEl) return;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
     }
@@ -111,7 +123,7 @@ async function startCamera() {
 }
 
 async function predictCurrentCameraFrame() {
-  if (!videoEl.videoWidth || !videoEl.videoHeight) {
+  if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) {
     setStatus('카메라 화면이 아직 준비되지 않았습니다.', true);
     return;
   }
@@ -120,7 +132,7 @@ async function predictCurrentCameraFrame() {
 }
 
 async function predictUploadedImage(file) {
-  if (!file) return;
+  if (!file || !previewEl) return;
 
   const objectUrl = URL.createObjectURL(file);
   previewEl.src = objectUrl;
@@ -133,16 +145,25 @@ async function predictUploadedImage(file) {
   };
 }
 
-loadModelBtn.addEventListener('click', loadModel);
-startCameraBtn.addEventListener('click', startCamera);
-predictCameraBtn.addEventListener('click', predictCurrentCameraFrame);
-uploadInput.addEventListener('change', (event) => {
-  const file = event.target.files && event.target.files[0];
-  predictUploadedImage(file);
-});
+function bindTestEvents() {
+  if (!loadModelBtn || !startCameraBtn || !predictCameraBtn || !uploadInput) {
+    return;
+  }
+
+  loadModelBtn.addEventListener('click', loadModel);
+  startCameraBtn.addEventListener('click', startCamera);
+  predictCameraBtn.addEventListener('click', predictCurrentCameraFrame);
+  uploadInput.addEventListener('change', (event) => {
+    const file = event.target.files && event.target.files[0];
+    predictUploadedImage(file);
+  });
+}
 
 window.addEventListener('beforeunload', () => {
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
   }
 });
+
+setFooterYear();
+bindTestEvents();
