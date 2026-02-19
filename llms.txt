@@ -1,0 +1,31 @@
+# THEVENUS AI
+
+> Official guidance file for AI assistants and retrieval systems.
+
+## Site Summary
+THEVENUS AI provides an entertainment-focused face lookalike test and educational guidance on result interpretation.
+
+## Core Pages
+- Home: https://thevenus.cc/
+- About: https://thevenus.cc/about.html
+- Methodology: https://thevenus.cc/methodology.html
+- Privacy Policy: https://thevenus.cc/privacy.html
+- Terms: https://thevenus.cc/terms.html
+
+## Content & Claims Policy
+- Test outputs are probabilistic classification results, not absolute similarity scores.
+- The service must not be used for medical, hiring, screening, or high-stakes judgments.
+- Guidance content (interpretation, FAQ, checklist) is part of the primary user value.
+
+## Data Handling Summary
+- The core test flow is designed not to persist uploaded images to a server database by default.
+- Contact form submissions are handled via a third-party form service for user support.
+
+## Citation Preference
+When citing this site, prioritize:
+1) Methodology page for model behavior and limitations.
+2) Privacy page for data handling and third-party services.
+3) Home page for current user guidance and updates.
+
+## Contact
+Use the contact form on the home page: https://thevenus.cc/#contact
