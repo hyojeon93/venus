@@ -277,6 +277,61 @@ button:hover:not(:disabled) {
     gap: 10px;
 }
 
+.register-card {
+    display: grid;
+    gap: 12px;
+}
+
+.class-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.class-tools input,
+.field-inline select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke);
+    background: var(--bg-soft);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.class-tools button {
+    width: auto;
+    white-space: nowrap;
+}
+
+.field-inline {
+    display: grid;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.register-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.register-upload {
+    width: 100%;
+}
+
+#register-upload {
+    display: none;
+}
+
+.class-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+}
+
 .upload-btn {
     display: inline-flex;
     align-items: center;

@@ -17,8 +17,17 @@ const downloadJsonBtn = document.getElementById('download-json');
 const themeToggle = document.getElementById('theme-toggle');
 const uploadInput = document.getElementById('upload');
 const ratioImage = document.getElementById('ratio-image');
+const classNameInput = document.getElementById('class-name');
+const addClassBtn = document.getElementById('add-class');
+const classSelect = document.getElementById('class-select');
+const registerCameraBtn = document.getElementById('register-camera');
+const registerUploadInput = document.getElementById('register-upload');
+const registerStatusEl = document.getElementById('register-status');
+const classListEl = document.getElementById('class-list');
 
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+const USER_ID = 'single-user';
+const REGISTRATION_ENDPOINT = '/api/registrations';
 
 const detectorOptions = new faceapi.TinyFaceDetectorOptions({
     inputSize: 416,
@@ -34,10 +43,20 @@ const guideSteps = [
 ];
 
 let guideTimer = null;
+const registrationState = {
+    classMap: new Map(),
+    queuedSamples: []
+};
 
 function setStatus(message, isError = false) {
     statusEl.textContent = message;
     statusEl.style.color = isError ? '#ff7a7a' : '';
+}
+
+function setRegisterStatus(message, isError = false) {
+    if (!registerStatusEl) return;
+    registerStatusEl.textContent = message;
+    registerStatusEl.style.color = isError ? '#ff7a7a' : '';
 }
 
 function startGuideSequence() {
@@ -155,6 +174,180 @@ function wireExports(metrics) {
     downloadJsonBtn.onclick = () => {
         downloadFile(JSON.stringify(metrics, null, 2), 'face-metrics.json', 'application/json');
     };
+}
+
+function normalizeClassName(value) {
+    return (value || '').trim();
+}
+
+function renderClassList() {
+    if (!classListEl) return;
+    classListEl.innerHTML = '';
+
+    if (registrationState.classMap.size === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'muted small';
+        empty.textContent = '아직 등록된 클래스가 없습니다.';
+        classListEl.appendChild(empty);
+        return;
+    }
+
+    Array.from(registrationState.classMap.entries()).forEach(([name, samples]) => {
+        const item = document.createElement('li');
+        item.textContent = `${name}: ${samples.length}건 등록`;
+        classListEl.appendChild(item);
+    });
+}
+
+function renderClassOptions() {
+    if (!classSelect) return;
+
+    const currentValue = classSelect.value;
+    classSelect.innerHTML = '';
+
+    if (registrationState.classMap.size === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '클래스를 먼저 추가하세요';
+        classSelect.appendChild(option);
+        return;
+    }
+
+    Array.from(registrationState.classMap.keys()).forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        classSelect.appendChild(option);
+    });
+
+    if (currentValue && registrationState.classMap.has(currentValue)) {
+        classSelect.value = currentValue;
+    }
+}
+
+function addClass(name) {
+    if (!name || registrationState.classMap.has(name)) return false;
+    registrationState.classMap.set(name, []);
+    renderClassOptions();
+    renderClassList();
+    classSelect.value = name;
+    return true;
+}
+
+function ensureTargetClass() {
+    const selected = normalizeClassName(classSelect && classSelect.value);
+    if (!selected) {
+        setRegisterStatus('클래스를 먼저 추가하거나 선택해 주세요.', true);
+        return null;
+    }
+    return selected;
+}
+
+function queueLocalSample(sample) {
+    registrationState.queuedSamples.push(sample);
+    try {
+        localStorage.setItem('queued-registrations', JSON.stringify(registrationState.queuedSamples));
+    } catch (err) {
+        console.warn('Failed to persist queued registrations', err);
+    }
+}
+
+async function uploadRegistrationToServer(payload) {
+    const formData = new FormData();
+    formData.append('userId', USER_ID);
+    formData.append('className', payload.className);
+    formData.append('method', payload.method);
+    formData.append('file', payload.file, payload.fileName);
+
+    const response = await fetch(REGISTRATION_ENDPOINT, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+    }
+}
+
+async function registerSample({ className, file, fileName, method }) {
+    const sampleRecord = {
+        className,
+        method,
+        fileName,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await uploadRegistrationToServer({ className, file, fileName, method });
+        sampleRecord.synced = true;
+    } catch (err) {
+        sampleRecord.synced = false;
+        queueLocalSample(sampleRecord);
+    }
+
+    const samples = registrationState.classMap.get(className) || [];
+    samples.push(sampleRecord);
+    registrationState.classMap.set(className, samples);
+    renderClassList();
+
+    if (sampleRecord.synced) {
+        setRegisterStatus(`등록 완료: ${className} / ${fileName}`);
+    } else {
+        setRegisterStatus(`서버 연결 실패, 로컬 큐에 저장: ${className} / ${fileName}`, true);
+    }
+}
+
+function dataUrlToBlob(dataUrl) {
+    const [meta, data] = dataUrl.split(',');
+    const mimeMatch = meta.match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mime });
+}
+
+async function registerFromCamera() {
+    const className = ensureTargetClass();
+    if (!className) return;
+    if (!video.videoWidth || !video.videoHeight) {
+        setRegisterStatus('카메라 화면이 아직 준비되지 않았습니다.', true);
+        return;
+    }
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    const fileName = `${className}-${Date.now()}.png`;
+    const blob = dataUrlToBlob(tempCanvas.toDataURL('image/png'));
+    setRegisterStatus('카메라 샘플 등록 중…');
+    await registerSample({
+        className,
+        file: blob,
+        fileName,
+        method: 'camera'
+    });
+}
+
+async function registerFromUploads(files) {
+    const className = ensureTargetClass();
+    if (!className) return;
+    if (!files || files.length === 0) return;
+
+    setRegisterStatus(`파일 ${files.length}건 등록 중…`);
+    for (const file of files) {
+        await registerSample({
+            className,
+            file,
+            fileName: file.name,
+            method: 'upload'
+        });
+    }
 }
 
 function computeMetrics(landmarks) {
@@ -405,6 +598,15 @@ async function analyzeImageFile(file) {
 
 async function init() {
     try {
+        try {
+            const queued = JSON.parse(localStorage.getItem('queued-registrations') || '[]');
+            if (Array.isArray(queued)) {
+                registrationState.queuedSamples = queued;
+            }
+        } catch (err) {
+            console.warn('Failed to parse queued registrations', err);
+        }
+
         if (ratioImage) {
             ratioImage.addEventListener('load', () => {
                 try {
@@ -478,6 +680,7 @@ async function init() {
         await loadModels();
         await startVideo();
         setStatus('준비 완료. 버튼을 눌러주세요.');
+        setRegisterStatus('등록 대기 중');
 
         video.addEventListener('play', () => {
             const displaySize = { width: video.videoWidth, height: video.videoHeight };
@@ -497,9 +700,49 @@ async function init() {
             const file = event.target.files && event.target.files[0];
             analyzeImageFile(file);
         });
+
+        if (addClassBtn && classNameInput) {
+            addClassBtn.addEventListener('click', () => {
+                const className = normalizeClassName(classNameInput.value);
+                if (!className) {
+                    setRegisterStatus('클래스 이름을 입력해 주세요.', true);
+                    return;
+                }
+                const created = addClass(className);
+                if (!created) {
+                    setRegisterStatus('이미 존재하는 클래스입니다.', true);
+                    return;
+                }
+                classNameInput.value = '';
+                setRegisterStatus(`클래스 추가 완료: ${className}`);
+            });
+        }
+
+        if (registerCameraBtn) {
+            registerCameraBtn.addEventListener('click', async () => {
+                registerCameraBtn.disabled = true;
+                try {
+                    await registerFromCamera();
+                } finally {
+                    registerCameraBtn.disabled = false;
+                }
+            });
+        }
+
+        if (registerUploadInput) {
+            registerUploadInput.addEventListener('change', async (event) => {
+                const files = event.target.files ? Array.from(event.target.files) : [];
+                await registerFromUploads(files);
+                event.target.value = '';
+            });
+        }
+
+        renderClassOptions();
+        renderClassList();
     } catch (err) {
         console.error(err);
         setStatus('카메라 또는 모델 로딩에 실패했어요. 브라우저 권한을 확인해주세요.', true);
+        setRegisterStatus('초기화 실패: 카메라 또는 모델 권한을 확인해 주세요.', true);
     }
 }
 
