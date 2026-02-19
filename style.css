@@ -141,6 +141,11 @@ video,
   margin-top: 14px;
 }
 
+.comments-card,
+.contact-card {
+  margin-top: 14px;
+}
+
 .summary {
   margin: 0 0 12px;
   color: var(--accent);
@@ -174,6 +179,39 @@ video,
 .fill {
   height: 100%;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
+}
+
+.contact-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--card-soft);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+#disqus_thread {
+  margin-top: 8px;
 }
 
 @media (max-width: 840px) {
