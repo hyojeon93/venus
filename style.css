@@ -559,3 +559,45 @@ video,
     padding: 18px;
   }
 }
+
+@media (max-width: 767px) {
+  :root {
+    --bg: #fff7fb;
+    --bg-soft: #fff1f7;
+    --card: #ffffff;
+    --text: #2a1e2a;
+    --muted: #8b6a82;
+    --line: rgba(236, 138, 189, 0.28);
+    --accent: #ff85c2;
+    --accent-2: #ffd7ea;
+  }
+
+  body {
+    background:
+      radial-gradient(900px 500px at 0% -5%, rgba(255, 133, 194, 0.24), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(255, 215, 234, 0.42), transparent 60%),
+      var(--bg);
+  }
+
+  .brand {
+    color: #4d2443;
+  }
+
+  .top-nav a {
+    background: #ffffff;
+  }
+
+  .card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 243, 249, 0.98));
+    box-shadow: 0 10px 22px rgba(228, 112, 170, 0.18);
+  }
+
+  .primary {
+    color: #44203a;
+  }
+
+  .site-header,
+  .app-dock {
+    background: rgba(255, 244, 250, 0.92);
+  }
+}
