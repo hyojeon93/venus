@@ -12,6 +12,9 @@ const resultsEl = document.getElementById('results');
 const videoEl = document.getElementById('video');
 const previewEl = document.getElementById('preview');
 const yearEls = document.querySelectorAll('#year');
+const ratioStatusEl = document.getElementById('ratio-status');
+const ratioScoreEl = document.getElementById('ratio-score');
+const ratioMetricsBody = document.getElementById('ratio-metrics-body');
 const shareNativeBtn = document.getElementById('share-native');
 const shareCopyBtn = document.getElementById('share-copy');
 const shareStatusEl = document.getElementById('share-status');
@@ -22,6 +25,9 @@ const shareKakaoStoryLink = document.getElementById('share-kakaostory');
 let model = null;
 let stream = null;
 let currentTopMessage = 'thevenus AI 테스트 해봤어요!';
+let faceRatioModelReady = false;
+
+const FACE_MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
 
 function setFooterYear() {
   const year = new Date().getFullYear();
@@ -36,10 +42,165 @@ function setStatus(message, isError = false) {
   statusEl.style.color = isError ? '#ffb4b4' : '';
 }
 
+function setRatioStatus(message, isError = false) {
+  if (!ratioStatusEl) return;
+  ratioStatusEl.textContent = message;
+  ratioStatusEl.style.color = isError ? '#ffb4b4' : '';
+}
+
 function setSummary(text) {
   if (!summaryEl) return;
   summaryEl.textContent = text;
   currentTopMessage = text;
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function midpoint(a, b) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatRatio(value) {
+  return value.toFixed(2);
+}
+
+function formatPercent(value) {
+  return `${value.toFixed(1)}%`;
+}
+
+function computeDeviation(value, range) {
+  if (value >= range.min && value <= range.max) return 0;
+  const nearest = value < range.min ? range.min : range.max;
+  return Math.abs(((value - nearest) / nearest) * 100);
+}
+
+function computeMetrics(landmarks) {
+  const jaw = landmarks.getJawOutline();
+  const leftJaw = jaw[0];
+  const rightJaw = jaw[16];
+  const faceWidth = distance(leftJaw, rightJaw);
+  const jawWidth = distance(jaw[4], jaw[12]);
+
+  const leftEye = landmarks.getLeftEye();
+  const rightEye = landmarks.getRightEye();
+  const leftEyeCenter = midpoint(leftEye[0], leftEye[3]);
+  const rightEyeCenter = midpoint(rightEye[0], rightEye[3]);
+  const eyeDistance = distance(leftEyeCenter, rightEyeCenter);
+
+  const nose = landmarks.getNose();
+  const noseWidth = distance(nose[3], nose[5]);
+
+  const mouth = landmarks.getMouth();
+  const mouthWidth = distance(mouth[0], mouth[6]);
+
+  const brow = landmarks.getLeftEyeBrow().concat(landmarks.getRightEyeBrow());
+  const browTop = brow.reduce((min, p) => (p.y < min.y ? p : min), brow[0]);
+  const browLeft = landmarks.getLeftEyeBrow()[0];
+  const browRight = landmarks.getRightEyeBrow()[4];
+  const foreheadWidth = distance(browLeft, browRight);
+  const chin = jaw[8];
+  const faceHeight = distance(browTop, chin);
+
+  const eyeLine = midpoint(leftEyeCenter, rightEyeCenter);
+  const noseTip = nose[3];
+  const mouthCenter = midpoint(mouth[3], mouth[9]);
+
+  const eyeToNose = Math.abs(eyeLine.y - noseTip.y);
+  const noseToMouth = Math.abs(noseTip.y - mouthCenter.y);
+  const mouthToChin = Math.abs(mouthCenter.y - chin.y);
+  const totalVertical = eyeToNose + noseToMouth + mouthToChin;
+
+  return [
+    { label: '눈 사이 거리 / 얼굴 너비', value: eyeDistance / faceWidth, range: { min: 0.36, max: 0.48 } },
+    { label: '코 너비 / 얼굴 너비', value: noseWidth / faceWidth, range: { min: 0.18, max: 0.30 } },
+    { label: '입 너비 / 얼굴 너비', value: mouthWidth / faceWidth, range: { min: 0.30, max: 0.46 } },
+    { label: '눈-코 비율 (세로)', value: eyeToNose / (noseToMouth || 1), range: { min: 0.80, max: 1.20 } },
+    { label: '코-입 비율 (세로)', value: noseToMouth / (mouthToChin || 1), range: { min: 0.80, max: 1.30 } },
+    { label: '상·중·하안면 비율(상)', value: eyeToNose / totalVertical, range: { min: 0.30, max: 0.36 } },
+    { label: '상·중·하안면 비율(중)', value: noseToMouth / totalVertical, range: { min: 0.30, max: 0.36 } },
+    { label: '상·중·하안면 비율(하)', value: mouthToChin / totalVertical, range: { min: 0.30, max: 0.36 } },
+    { label: '얼굴 높이 / 얼굴 너비', value: faceHeight / faceWidth, range: { min: 1.15, max: 1.45 } },
+    { label: '턱 너비 / 얼굴 너비', value: jawWidth / faceWidth, range: { min: 0.70, max: 0.90 } },
+    { label: '이마 너비 / 얼굴 너비', value: foreheadWidth / faceWidth, range: { min: 0.70, max: 0.95 } }
+  ];
+}
+
+function renderRatioMetrics(metrics) {
+  if (!ratioMetricsBody) return;
+  ratioMetricsBody.innerHTML = '';
+
+  metrics.forEach((metric) => {
+    const deviation = computeDeviation(metric.value, metric.range);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${metric.label}</td>
+      <td>${formatRatio(metric.value)}</td>
+      <td>${metric.range.min.toFixed(2)} - ${metric.range.max.toFixed(2)}</td>
+      <td>${deviation === 0 ? '적정' : formatPercent(deviation)}</td>
+    `;
+    ratioMetricsBody.appendChild(row);
+  });
+}
+
+function computeRatioMatchScore(metrics) {
+  if (!metrics.length) return 0;
+  const normalized = metrics.map((metric) => {
+    const deviation = computeDeviation(metric.value, metric.range);
+    return clamp(1 - deviation / 40, 0, 1);
+  });
+  const avg = normalized.reduce((acc, value) => acc + value, 0) / normalized.length;
+  return avg * 100;
+}
+
+async function loadFaceRatioModels() {
+  if (!window.faceapi) {
+    setRatioStatus('비율 분석 모듈 로딩에 실패했습니다.', true);
+    return;
+  }
+  try {
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL)
+    ]);
+    faceRatioModelReady = true;
+    setRatioStatus('비율 분석 준비 완료');
+  } catch (error) {
+    console.error(error);
+    setRatioStatus('비율 분석 모델 로딩에 실패했습니다.', true);
+  }
+}
+
+async function analyzeFaceRatio(imageLike) {
+  if (!faceRatioModelReady) {
+    setRatioStatus('비율 분석 모델 로딩 중입니다.');
+    return;
+  }
+  try {
+    const detection = await faceapi
+      .detectSingleFace(imageLike, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+      .withFaceLandmarks();
+
+    if (!detection) {
+      setRatioStatus('얼굴을 찾지 못해 비율을 계산하지 못했습니다.', true);
+      if (ratioScoreEl) ratioScoreEl.textContent = '—';
+      return;
+    }
+
+    const metrics = computeMetrics(detection.landmarks);
+    renderRatioMetrics(metrics);
+    const score = computeRatioMatchScore(metrics);
+    if (ratioScoreEl) ratioScoreEl.textContent = `${score.toFixed(1)}%`;
+    setRatioStatus('얼굴 비율 분석이 완료되었습니다.');
+  } catch (error) {
+    console.error(error);
+    setRatioStatus('비율 분석 중 오류가 발생했습니다.', true);
+  }
 }
 
 function renderPredictions(predictions) {
@@ -137,6 +298,7 @@ async function predictCurrentCameraFrame() {
   }
   setStatus('카메라 화면 분석 중...');
   await runPrediction(videoEl);
+  await analyzeFaceRatio(videoEl);
 }
 
 async function predictUploadedImage(file) {
@@ -150,6 +312,7 @@ async function predictUploadedImage(file) {
     URL.revokeObjectURL(objectUrl);
     setStatus('업로드 이미지 분석 중...');
     await runPrediction(previewEl);
+    await analyzeFaceRatio(previewEl);
   };
 }
 
@@ -244,3 +407,4 @@ window.addEventListener('beforeunload', () => {
 setFooterYear();
 bindTestEvents();
 bindShareEvents();
+loadFaceRatioModels();

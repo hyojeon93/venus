@@ -237,6 +237,62 @@ video,
   background: rgba(255, 255, 255, 0.02);
 }
 
+.ratio-card {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ratio-meta p {
+  margin: 0 0 8px;
+}
+
+.ratio-image-wrap {
+  margin: 8px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b1020;
+}
+
+.ratio-image-wrap img {
+  width: 100%;
+  display: block;
+}
+
+.ratio-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.ratio-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ratio-table th,
+.ratio-table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ratio-table th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ratio-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .summary {
   margin: 0 0 10px;
   color: #ffe293;
@@ -466,6 +522,15 @@ video,
 
   .grid-two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ratio-image-wrap {
+    max-height: 280px;
+  }
+
+  .ratio-image-wrap img {
+    height: 100%;
+    object-fit: cover;
   }
 
   .footer-inner {
