@@ -1,217 +1,54 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내얼굴 비율찾기 | 얼굴 대칭·비율 시각화</title>
-    <meta name="description" content="얼굴 랜드마크 기반으로 대칭선과 비율 지표를 시각화합니다. 카메라 또는 사진 업로드로 간단히 분석해 보세요.">
-    <meta name="robots" content="index,follow">
-    <link rel="canonical" href="https://thevenus.cc/">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="내얼굴 비율찾기">
-    <meta property="og:title" content="내얼굴 비율찾기 | 얼굴 대칭·비율 시각화">
-    <meta property="og:description" content="얼굴 랜드마크 기반으로 대칭선과 비율 지표를 시각화합니다. 카메라 또는 사진 업로드로 간단히 분석해 보세요.">
-    <meta property="og:url" content="https://thevenus.cc/">
-    <meta property="og:image" content="https://thevenus.cc/pngegg.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="내얼굴 비율찾기 | 얼굴 대칭·비율 시각화">
-    <meta name="twitter:description" content="얼굴 랜드마크 기반으로 대칭선과 비율 지표를 시각화합니다. 카메라 또는 사진 업로드로 간단히 분석해 보세요.">
-    <meta name="twitter:image" content="https://thevenus.cc/pngegg.png">
-    <meta name="theme-color" content="#0f1115">
-    <link rel="alternate" hreflang="ko" href="https://thevenus.cc/">
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prata&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLDTJ9N8TB"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-RLDTJ9N8TB');
-    </script>
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "vjds67159t");
-    </script>
-    <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "내얼굴 비율찾기",
-            "url": "https://thevenus.cc/",
-            "description": "얼굴 랜드마크 기반으로 대칭선과 비율 지표를 시각화합니다. 카메라 또는 사진 업로드로 간단히 분석해 보세요.",
-            "inLanguage": "ko-KR"
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카리나 vs 윈터 닮은꼴 테스트</title>
+  <meta name="description" content="Teachable Machine 모델로 카리나/윈터 닮은꼴을 테스트해보세요." />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">Light</button>
+  <main class="container">
     <header class="hero">
-        <p class="eyebrow">Face Match</p>
-        <h1>내얼굴 비율찾기</h1>
-        <figure class="golden-ratio">
-            <img id="ratio-image" src="pngegg.png" alt="얼굴 비율 참고 이미지" loading="lazy" />
-            <figcaption class="muted small">참고용 이미지</figcaption>
-        </figure>
-        <p class="sub">얼굴 랜드마크를 기반으로 대칭선과 비율 지표를 시각화합니다. 결과는 참고용 지표이며, 미용·의료적 판단을 대체하지 않습니다.</p>
-        <p class="guide-inline">촬영 가이드: 정면 → 왼쪽 측면 → 오른쪽 측면 → 이마 위에서 코가 보이게 → 아래에서 위로 턱과 코가 보이게</p>
+      <p class="eyebrow">AI LOOKALIKE TEST</p>
+      <h1>카리나 vs 윈터 닮은꼴 테스트</h1>
+      <p class="sub">카메라 촬영 또는 기존 사진 업로드로 닮은꼴 결과를 확인하세요.</p>
     </header>
 
-    <main class="grid">
-        <section class="stage">
-            <div class="frame">
-                <video id="video" width="720" height="560" autoplay muted playsinline></video>
-                <canvas id="overlay" width="720" height="560"></canvas>
-                <img id="photo-preview" alt="업로드한 사진 미리보기" />
-            </div>
-            <div class="snapshot">
-                <p class="label">Captured</p>
-                <canvas id="capture" width="360" height="280"></canvas>
-            </div>
-        </section>
-
-        <section class="panel">
-            <div class="card">
-                <h2>분석 시작</h2>
-                <p class="muted">얼굴 정면이 잘 보이게 맞춘 뒤 버튼을 눌러주세요.</p>
-                <button id="analyze">분석하기</button>
-                <div class="upload">
-                    <label class="upload-btn" for="upload">사진 업로드</label>
-                    <input id="upload" type="file" accept="image/*" />
-                    <p class="muted small">카메라 접근이 어려우면 사진을 업로드해도 됩니다.</p>
-                </div>
-                <p id="status" class="status">모델을 불러오는 중…</p>
-                <p id="guide-seq" class="status guide"></p>
-            </div>
-
-            <div class="card register-card">
-                <h2>학습 데이터 등록</h2>
-                <p class="muted">단일 사용자 기준으로 연예인/인플루언서 클래스별 샘플을 등록합니다.</p>
-                <div class="class-tools">
-                    <input id="class-name" type="text" placeholder="클래스 이름 입력 (예: 연예인A)" />
-                    <button id="add-class" type="button">클래스 추가</button>
-                </div>
-                <label class="field-inline" for="class-select">
-                    <span>등록 대상 클래스</span>
-                    <select id="class-select">
-                        <option value="">클래스를 먼저 추가하세요</option>
-                    </select>
-                </label>
-                <div class="register-actions">
-                    <button id="register-camera" type="button">현재 카메라 화면 등록</button>
-                    <label class="upload-btn register-upload" for="register-upload">촬영본 업로드 등록</label>
-                    <input id="register-upload" type="file" accept="image/*,video/*" multiple />
-                </div>
-                <p id="register-status" class="status">등록 대기 중</p>
-                <ul id="class-list" class="class-list">
-                    <li class="muted small">아직 등록된 클래스가 없습니다.</li>
-                </ul>
-            </div>
-
-            <div class="card summary">
-                <h2>요약</h2>
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <span class="label">얼굴형</span>
-                        <span id="face-shape">—</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">신뢰도</span>
-                        <span id="confidence">—</span>
-                    </div>
-                </div>
-                <p class="muted small" id="confidence-note">얼굴을 인식하면 참고용 요약이 표시됩니다.</p>
-            </div>
-
-            <div class="card metrics-table-card">
-                <h2>측정 테이블</h2>
-                <div class="table-wrap">
-                    <table id="metrics-table">
-                        <thead>
-                            <tr>
-                                <th>지표</th>
-                                <th>값</th>
-                                <th>참고 범위</th>
-                                <th>편차</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="4" class="muted">얼굴을 인식하면 테이블이 채워집니다.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="export">
-                    <button id="download-csv">CSV 다운로드</button>
-                    <button id="download-json">JSON 다운로드</button>
-                </div>
-            </div>
-
-            <div class="card comments">
-                <h2>댓글</h2>
-                <div id="disqus_thread"></div>
-                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-            </div>
-        </section>
-    </main>
-
-    <section class="tips">
-        <div class="card">
-            <h2>촬영 가이드 (5장)</h2>
-            <ul class="tip-list">
-                <li>정면 1장</li>
-                <li>왼쪽 측면 1장</li>
-                <li>오른쪽 측면 1장</li>
-                <li>이마 위에서 촬영해 코가 보이게 1장</li>
-                <li>아래에서 위로 촬영해 턱과 코가 보이게 1장</li>
-            </ul>
-            <p class="muted small">동일한 조명과 배경에서 촬영하면 비교가 더 안정적입니다.</p>
-        </div>
+    <section class="card controls">
+      <button id="load-model" class="primary">모델 불러오기</button>
+      <button id="start-camera" class="secondary" disabled>카메라 시작</button>
+      <button id="predict-camera" class="secondary" disabled>현재 화면 분석</button>
+      <label class="upload-btn" for="upload-image">사진 업로드 분석</label>
+      <input id="upload-image" type="file" accept="image/*" />
+      <p id="status" class="status">모델을 먼저 불러와 주세요.</p>
     </section>
 
-    <section class="contact">
-        <div class="card form-card">
-            <h2>제휴 문의</h2>
-            <p class="muted">간단한 정보를 남겨주시면 빠르게 연락드릴게요.</p>
-            <form class="contact-form" action="https://formspree.io/f/xwvnqbak" method="POST">
-                <label class="field">
-                    <span>이름/회사명</span>
-                    <input type="text" name="name" required placeholder="이름 또는 회사명을 입력하세요" />
-                </label>
-                <label class="field">
-                    <span>이메일</span>
-                    <input type="email" name="email" required placeholder="you@example.com" />
-                </label>
-                <label class="field">
-                    <span>전화번호</span>
-                    <input type="tel" name="phone" required placeholder="010-1234-5678" />
-                </label>
-                <label class="field">
-                    <span>문의 내용</span>
-                    <textarea name="message" rows="4" required placeholder="어떤 제휴를 원하시나요?"></textarea>
-                </label>
-                <button type="submit">문의 보내기</button>
-            </form>
+    <section class="grid">
+      <article class="card stage">
+        <h2>카메라</h2>
+        <div class="frame">
+          <video id="video" autoplay muted playsinline></video>
         </div>
+      </article>
+
+      <article class="card stage">
+        <h2>업로드 이미지</h2>
+        <div class="frame">
+          <img id="preview" alt="업로드 이미지 미리보기" />
+        </div>
+      </article>
     </section>
 
-    <script>
-        (function() {
-            var d = document, s = d.createElement('script');
-            s.src = 'https://thevenus.disqus.com/embed.js';
-            s.setAttribute('data-timestamp', +new Date());
-            (d.head || d.body).appendChild(s);
-        })();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <script src="main.js"></script>
+    <section class="card result-card">
+      <h2>분석 결과</h2>
+      <p id="summary" class="summary">아직 분석 결과가 없습니다.</p>
+      <div id="results" class="results"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
