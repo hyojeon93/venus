@@ -12,9 +12,16 @@ const resultsEl = document.getElementById('results');
 const videoEl = document.getElementById('video');
 const previewEl = document.getElementById('preview');
 const yearEls = document.querySelectorAll('#year');
+const shareNativeBtn = document.getElementById('share-native');
+const shareCopyBtn = document.getElementById('share-copy');
+const shareStatusEl = document.getElementById('share-status');
+const shareXLink = document.getElementById('share-x');
+const shareFacebookLink = document.getElementById('share-facebook');
+const shareKakaoStoryLink = document.getElementById('share-kakaostory');
 
 let model = null;
 let stream = null;
+let currentTopMessage = 'thevenus AI 테스트 해봤어요!';
 
 function setFooterYear() {
   const year = new Date().getFullYear();
@@ -32,6 +39,7 @@ function setStatus(message, isError = false) {
 function setSummary(text) {
   if (!summaryEl) return;
   summaryEl.textContent = text;
+  currentTopMessage = text;
 }
 
 function renderPredictions(predictions) {
@@ -159,6 +167,74 @@ function bindTestEvents() {
   });
 }
 
+function getSharePayload() {
+  const url = window.location.href;
+  const title = 'thevenus - AI 얼굴 테스트';
+  const text = `${currentTopMessage} 지금 해보기`;
+  return { url, title, text };
+}
+
+function setShareStatus(message, isError = false) {
+  if (!shareStatusEl) return;
+  shareStatusEl.textContent = message;
+  shareStatusEl.style.color = isError ? '#ffb4b4' : '';
+}
+
+function updateShareLinks() {
+  const payload = getSharePayload();
+  const encodedUrl = encodeURIComponent(payload.url);
+  const encodedText = encodeURIComponent(`${payload.title} | ${payload.text}`);
+
+  if (shareXLink) {
+    shareXLink.href = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+  }
+
+  if (shareFacebookLink) {
+    shareFacebookLink.href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+  }
+
+  if (shareKakaoStoryLink) {
+    shareKakaoStoryLink.href = `https://story.kakao.com/share?url=${encodedUrl}`;
+  }
+}
+
+async function onNativeShare() {
+  const payload = getSharePayload();
+  if (!navigator.share) {
+    setShareStatus('이 기기는 기본 공유를 지원하지 않아 링크 복사를 사용해 주세요.', true);
+    return;
+  }
+  try {
+    await navigator.share(payload);
+    setShareStatus('공유를 완료했습니다.');
+  } catch (error) {
+    if (error && error.name === 'AbortError') return;
+    setShareStatus('공유 중 오류가 발생했습니다. 링크 복사를 사용해 주세요.', true);
+  }
+}
+
+async function onCopyShareLink() {
+  const payload = getSharePayload();
+  try {
+    await navigator.clipboard.writeText(payload.url);
+    setShareStatus('링크를 복사했습니다.');
+  } catch (error) {
+    setShareStatus('클립보드 복사에 실패했습니다. 주소창 URL을 직접 복사해 주세요.', true);
+  }
+}
+
+function bindShareEvents() {
+  updateShareLinks();
+
+  if (shareNativeBtn) {
+    shareNativeBtn.addEventListener('click', onNativeShare);
+  }
+
+  if (shareCopyBtn) {
+    shareCopyBtn.addEventListener('click', onCopyShareLink);
+  }
+}
+
 window.addEventListener('beforeunload', () => {
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
@@ -167,3 +243,4 @@ window.addEventListener('beforeunload', () => {
 
 setFooterYear();
 bindTestEvents();
+bindShareEvents();

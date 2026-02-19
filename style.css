@@ -276,6 +276,29 @@ video,
   margin: 0 0 10px;
 }
 
+.share-card .status {
+  margin-top: 10px;
+}
+
+.share-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.share-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+}
+
 .bullet-list {
   margin: 0;
   padding-left: 18px;
@@ -381,7 +404,7 @@ video,
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   background: rgba(13, 18, 32, 0.92);
@@ -434,6 +457,10 @@ video,
   }
 
   .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .share-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
